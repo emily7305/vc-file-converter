@@ -17,6 +17,10 @@ import { settings } from "./settings";
 import managedStyle from "./styles.css?managed";
 import { ffmpeg } from "./utils/converter";
 
+// The Discord code patch below can't be undone at runtime, so the hover button checks this
+// before rendering. Everything else (chat bar button, menus, styles) Vencord adds/removes live.
+let running = false;
+
 export default definePlugin({
     name: "FileConverter",
     description: "Convert, compress and transcode audio/video/GIF attachments locally with FFmpeg (WebAssembly), before sending or after receiving.",
@@ -24,6 +28,9 @@ export default definePlugin({
     tags: ["Media", "Utility"],
     settings,
     managedStyle,
+    // Toggle on/off without restarting Discord. The patch only takes effect after a restart,
+    // but it's an optional extra; the chat bar button and menus work immediately.
+    requiresRestart: false,
 
     patches: [
         {
@@ -49,9 +56,16 @@ export default definePlugin({
         "channel-attach": channelAttachMenuPatch,
     },
 
-    renderUploadButton: UploadConvertButton,
+    renderUploadButton(props: Parameters<typeof UploadConvertButton>[0]) {
+        return running ? <UploadConvertButton {...props} /> : null;
+    },
+
+    start() {
+        running = true;
+    },
 
     stop() {
+        running = false;
         // Free the worker and its (potentially multi-GB) WASM heap.
         ffmpeg.dispose();
     },
