@@ -38,51 +38,54 @@ A progress bar shows a percentage when FFmpeg knows the input duration. For inpu
 > [!WARNING]
 > Reminder: installing a client mod goes against Discord's Terms of Service and **may get your account banned**. Continue only if you accept that risk.
 
-> **Heads-up:** neither Vencord nor Equicord can load a plugin from a URL at runtime. There's no "paste a raw GitHub link" field. Userplugins are compiled into the client from source, so you need a source checkout of Vencord or Equicord. It takes about five minutes the first time.
+These steps assume you **already have Vencord or Equicord installed from source**, meaning you have a Vencord/Equicord folder on your computer that you built with `pnpm build` and installed with `pnpm inject` (or pointed Vesktop/Equibop at).
 
-Prerequisites: [git](https://git-scm.com), [Node.js](https://nodejs.org) ≥ 18 and [pnpm](https://pnpm.io) (`npm i -g pnpm`).
+> [!IMPORTANT]
+> **Installed with the regular one-click installer instead?** Custom plugins can't be added to that version. Neither Vencord nor Equicord can load a plugin from a URL, so plugins have to be compiled in from source. Follow Vencord's [custom plugins guide](https://docs.vencord.dev/installing/custom-plugins/) (Equicord works the same way, see the [Equicord repo](https://github.com/Equicord/Equicord)) to switch to a source install first, then come back here.
 
-### Vencord
+### 1. Add the plugin
 
-```sh
-git clone https://github.com/Vendicated/Vencord
-cd Vencord
-pnpm install --frozen-lockfile
-
-# Clone this repository straight into the userplugins folder
-git clone https://github.com/emily7305/vencord-file-converter src/userplugins/vencord-file-converter
-
-pnpm build
-pnpm inject      # patches your Discord install with your own build
-```
-
-Restart Discord, open **User Settings → Vencord → Plugins**, search for **FileConverter** and enable it.
-
-### Equicord
-
-Same steps, in an Equicord checkout:
+Open a terminal **in your Vencord or Equicord folder** (the one containing `package.json` and `src/`) and run:
 
 ```sh
-git clone https://github.com/Equicord/Equicord
-cd Equicord
-pnpm install --frozen-lockfile
 git clone https://github.com/emily7305/vencord-file-converter src/userplugins/vencord-file-converter
-pnpm build
-pnpm inject
 ```
 
-Then enable **FileConverter** under **User Settings → Equicord → Plugins**.
+No `git`? Download this repo as a ZIP (**Code → Download ZIP**), unzip it, and move the folder to `src/userplugins/vencord-file-converter`. Make sure `index.tsx` sits directly inside that folder.
 
-### Vesktop / Equibop
+### 2. Rebuild
 
-Build as above, then in Vesktop/Equibop settings point **Vencord Location** (Equibop: **Equicord Location**) at the checkout's `dist` folder.
+Still in the Vencord/Equicord folder:
+
+```sh
+pnpm build
+```
+
+You don't need to run `pnpm inject` again. Discord (or Vesktop/Equibop) already loads your build folder, so a rebuild is enough.
+
+### 3. Restart and enable
+
+Fully quit Discord (from the system tray too, not just the window) and open it again. Then go to:
+
+- **Vencord:** User Settings → **Vencord → Plugins**
+- **Equicord:** User Settings → **Equicord → Plugins**
+
+Search for **FileConverter** and switch it on.
 
 ### Updating
 
+From the Vencord/Equicord folder:
+
 ```sh
-cd src/userplugins/vencord-file-converter && git pull
-cd ../../.. && pnpm build
+git -C src/userplugins/vencord-file-converter pull
+pnpm build
 ```
+
+Then restart Discord.
+
+### Uninstalling
+
+Delete `src/userplugins/vencord-file-converter`, run `pnpm build` and restart Discord.
 
 ## How it works
 
