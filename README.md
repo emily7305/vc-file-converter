@@ -1,5 +1,16 @@
 # vencord-file-converter
 
+> [!CAUTION]
+> ## ⚠️ USE AT YOUR OWN RISK ⚠️
+>
+> **This is a Vencord/Equicord plugin. Client modifications like Vencord and Equicord go against [Discord's Terms of Service](https://discord.com/terms).**
+>
+> - Using this plugin, or any client mod, **could get your Discord account suspended or banned**.
+> - This project is **not affiliated with, endorsed by, or supported by Discord, Vencord or Equicord**.
+> - It is provided **as is, with no warranty** (see [LICENSE](LICENSE)). The author is **not responsible** for anything that happens to your account, your data or your files.
+>
+> **If you are not OK with that risk, do not install this.**
+
 A [Vencord](https://vencord.dev) / [Equicord](https://equicord.org) userplugin that converts, compresses and transcodes audio, video and GIFs **inside Discord**, both before you send them and after you receive them. Everything runs locally with FFmpeg compiled to WebAssembly. Your files never leave your machine.
 
 | Preset | What it does | FFmpeg flags (core) |
@@ -23,6 +34,9 @@ CRF and x264 speed are configurable in the plugin settings.
 A progress bar shows a percentage when FFmpeg knows the input duration. For inputs where it doesn't (some GIFs and streamed WebMs), it shows how much media time has been processed instead. Closing the modal cancels the job.
 
 ## Installation
+
+> [!WARNING]
+> Reminder: installing a client mod goes against Discord's Terms of Service and **may get your account banned**. Continue only if you accept that risk.
 
 > **Heads-up:** neither Vencord nor Equicord can load a plugin from a URL at runtime. There's no "paste a raw GitHub link" field. Userplugins are compiled into the client from source, so you need a source checkout of Vencord or Equicord. It takes about five minutes the first time.
 
