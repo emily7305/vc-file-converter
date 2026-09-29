@@ -108,11 +108,33 @@ try {
 
         ff.dispose();
 
+        // Compress preset: a high-bitrate 1440p source must shrink and be scaled to 1080p (both orientations).
+        const logs = [];
+        const probeFF = new FFmpegService({ coreBaseURL, onLog: l => logs.push(l) });
+        const dims = async file => {
+            await probeFF.load();
+            await probeFF.writeFile("probe.mp4", new Uint8Array(await file.arrayBuffer()));
+            logs.length = 0;
+            await probeFF.exec(["-i", "probe.mp4"]);
+            await probeFF.deleteFile("probe.mp4");
+            return logs.join("\n").match(/Video:.*?(\d{2,5})x(\d{2,5})/)?.slice(1).map(Number);
+        };
+        await ff.load();
+        const compress = [];
+        for (const size of ["2560x1440", "1440x2560", "640x360"]) {
+            const src = await make(["-f", "lavfi", "-i", `testsrc2=duration=2:size=${size}:rate=15`,
+                "-c:v", "libx264", "-preset", "ultrafast", "-crf", "8"], "big.mp4", `big ${size}.mp4`, "video/mp4");
+            const out = await ff.convert(src, src.name, getPreset("compress"));
+            compress.push({ size, in: src.size, out: out.size, dims: await dims(out) });
+        }
+        probeFF.dispose();
+        ff.dispose();
+
         const fallback = new FFmpegService({ coreBaseURL: coreBaseURL.replace("/core", "/core-plain") });
         const fallbackOk = await fallback.convert(mkv, mkv.name, getPreset("wav")).then(f => f.size > 0, e => e.message);
         fallback.dispose();
 
-        return { loadMs, out, abortResult, afterAbort, bad, fallbackOk };
+        return { loadMs, out, abortResult, afterAbort, bad, fallbackOk, compress };
     }, `${base}/core`);
 
     console.log(`ffmpeg-core loaded in ${results.loadMs} ms`);
@@ -136,6 +158,12 @@ try {
     };
     check("abort rejects with AbortError", results.abortResult === "AbortError", results.abortResult);
     check("service recovers after abort", results.afterAbort === true, results.afterAbort);
+    const expectDims = { "2560x1440": [1920, 1080], "1440x2560": [1080, 1920], "640x360": [640, 360] };
+    for (const c of results.compress) {
+        check(`compress ${c.size} → smaller + ${expectDims[c.size].join("x")}`,
+            c.out < c.in && c.dims?.join("x") === expectDims[c.size].join("x"),
+            { in: c.in, out: c.out, dims: c.dims });
+    }
     check("fetch+eval fallback when importScripts is refused", results.fallbackOk === true, results.fallbackOk);
     check("bad input → ConversionError with log", results.bad?.name === "ConversionError" && results.bad.hasLog, results.bad);
 } finally {

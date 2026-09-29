@@ -33,6 +33,8 @@ type Phase =
     | { name: "loading"; }
     | { name: "converting"; progress: ConvertProgress; }
     | { name: "done"; file: File; }
+    /** A "make it smaller" preset produced a file that isn't smaller. */
+    | { name: "not-smaller"; file: File; }
     | { name: "error"; message: string; log: string[]; };
 
 function sourceInfo(src: ConvertSource) {
@@ -136,7 +138,10 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
                 },
             });
 
-            finish(file);
+            if (preset.mustShrink && info.size > 0 && file.size >= info.size)
+                setPhase({ name: "not-smaller", file });
+            else
+                finish(file);
         } catch (e) {
             // After a cancel, late failures (e.g. the core download finishing with an error) are irrelevant.
             if (e instanceof AbortError || abort.signal.aborted) return;
@@ -187,6 +192,13 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
         actions.push({ text: phase.name === "error" ? "Retry" : "Convert", variant: "primary", onClick: start, disabled: !preset });
     if (busy)
         actions.push({ text: "Cancel", variant: "critical-primary", onClick: cancel });
+    if (phase.name === "not-smaller") {
+        const { file } = phase;
+        actions.push(
+            { text: "Keep original", variant: "primary", onClick: modalProps.onClose },
+            { text: "Use it anyway", variant: "secondary", onClick: () => finish(file) },
+        );
+    }
     if (phase.name === "done" && source.type === "attachment") {
         const { file } = phase;
         actions.push(
@@ -227,6 +239,14 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
 
                 {phase.name === "loading" && <ProgressBar progress={null} />}
                 {phase.name === "converting" && <ProgressBar progress={phase.progress} />}
+
+                {phase.name === "not-smaller" && (
+                    <div>
+                        This video is already well compressed: the result would be {formatBytes(phase.file.size)},
+                        {" "}not smaller than the original ({formatBytes(info.size)}), so nothing was changed.
+                        <div className={cl("muted")}>For a smaller file, raise the compress strength in the plugin settings.</div>
+                    </div>
+                )}
 
                 {phase.name === "done" && (
                     <div className={cl("success")}>

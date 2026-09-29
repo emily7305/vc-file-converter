@@ -14,7 +14,7 @@ export const settings = definePluginSettings({
         type: OptionType.SELECT,
         description: "Preset pre-selected for videos",
         options: PRESETS.filter(p => p.accepts.includes("video")).map(p => ({
-            label: p.label, value: p.id, default: p.id === "h264",
+            label: p.label, value: p.id, default: p.id === "compress",
         })),
     },
     defaultAudioPreset: {
@@ -31,9 +31,16 @@ export const settings = definePluginSettings({
             label: p.label, value: p.id, default: p.id === "gif-mp4",
         })),
     },
+    compressCrf: {
+        type: OptionType.SLIDER,
+        description: "Compress preset strength (CRF). Higher = smaller files but lower quality. 26-30 is a good balance.",
+        markers: [23, 26, 28, 30, 32, 35],
+        default: 28,
+        stickToMarkers: false,
+    },
     crf: {
         type: OptionType.SLIDER,
-        description: "H.264 quality (CRF). Lower = better quality & bigger files. 18-23 is visually near-lossless.",
+        description: "High quality re-encode / GIF quality (CRF). Lower = better quality & bigger files. 18-23 is visually near-lossless.",
         markers: [14, 17, 20, 23, 26, 29, 32],
         default: 20,
         stickToMarkers: false,

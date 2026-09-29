@@ -41,9 +41,17 @@ test("presets take input first and output last", () => {
 });
 
 test("requested quality flags are present", () => {
-    const argsOf = id => getPreset(id).args("i", "o", { crf: 18, x264Preset: "medium" });
+    const argsOf = id => getPreset(id).args("i", "o", { crf: 18, compressCrf: 30, x264Preset: "medium" });
     assert.deepEqual(argsOf("mp3").slice(2, 7), ["-vn", "-c:a", "libmp3lame", "-q:a", "0"]);
     assert.ok(argsOf("remux-mp4").join(" ").includes("-c copy"));
     const h264 = argsOf("h264").join(" ");
     assert.ok(h264.includes("-c:v libx264") && h264.includes("-crf 18") && h264.includes("-preset medium"));
+});
+
+test("compress preset targets size, not fidelity", () => {
+    const p = getPreset("compress");
+    assert.equal(p.mustShrink, true);
+    const args = p.args("i", "o", { ...DEFAULT_PRESET_OPTIONS, compressCrf: 30 }).join(" ");
+    assert.ok(args.includes("-crf 30") && args.includes("-b:a 128k") && args.includes("1080"));
+    assert.ok(!getPreset("h264").mustShrink);
 });

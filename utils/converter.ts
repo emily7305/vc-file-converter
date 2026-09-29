@@ -53,6 +53,7 @@ export async function loadFFmpeg() {
 export function getPresetOptions(): PresetOptions {
     return {
         crf: Math.round(settings.store.crf),
+        compressCrf: Math.round(settings.store.compressCrf),
         x264Preset: settings.store.x264Preset,
     };
 }

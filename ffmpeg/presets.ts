@@ -20,17 +20,22 @@ export interface Preset {
     mime: string;
     /** Full ffmpeg argument list (excluding the leading `ffmpeg`). */
     args(input: string, output: string, opts: PresetOptions): string[];
+    /** The whole point is a smaller file: if the output isn't smaller, keep the original. */
+    mustShrink?: boolean;
 }
 
 export interface PresetOptions {
-    /** x264 constant rate factor, 0 (lossless) – 51 (worst). */
+    /** x264 constant rate factor, 0 (lossless) – 51 (worst), for high-quality re-encodes. */
     crf: number;
+    /** x264 CRF for the "Compress" preset. Higher = smaller. */
+    compressCrf: number;
     /** x264 speed/efficiency trade-off. Slower presets are painfully slow in WASM. */
     x264Preset: string;
 }
 
 export const DEFAULT_PRESET_OPTIONS: PresetOptions = {
     crf: 20,
+    compressCrf: 28,
     x264Preset: "veryfast",
 };
 
@@ -40,16 +45,20 @@ export const DEFAULT_PRESET_OPTIONS: PresetOptions = {
  * `+faststart` (moov atom up front so Discord can start playback while
  * streaming).
  */
-const H264_OUTPUT = (opts: PresetOptions) => [
+const H264_OUTPUT = (opts: PresetOptions, crf = opts.crf) => [
     "-c:v", "libx264",
     "-preset", opts.x264Preset,
-    "-crf", String(opts.crf),
+    "-crf", String(crf),
     "-pix_fmt", "yuv420p",
     "-movflags", "+faststart",
 ];
 
 // libx264 with yuv420p needs even dimensions; GIFs frequently have odd ones.
 const EVEN_DIMENSIONS = ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"];
+
+// Shrink so the short side is at most 1080 px (4K/1440p phone videos → 1080p), keeping the
+// aspect ratio and even dimensions. Smaller videos are left at their size.
+const MAX_1080P = ["-vf", "scale=w='trunc(iw*min(1,1080/min(iw,ih))/2)*2':h='trunc(ih*min(1,1080/min(iw,ih))/2)*2'"];
 
 export const PRESETS: Preset[] = [
     {
@@ -89,9 +98,25 @@ export const PRESETS: Preset[] = [
         args: (i, o) => ["-i", i, "-map", "0", "-c", "copy", "-movflags", "+faststart", o],
     },
     {
+        id: "compress",
+        label: "Compress → MP4 (smaller file)",
+        description: "Shrinks the file for sending: H.264, max 1080p, 128k audio. If it can't get smaller, your original is kept.",
+        accepts: ["video"],
+        ext: "mp4",
+        mime: "video/mp4",
+        mustShrink: true,
+        args: (i, o, opts) => [
+            "-i", i,
+            ...MAX_1080P,
+            ...H264_OUTPUT(opts, opts.compressCrf),
+            "-c:a", "aac", "-b:a", "128k",
+            o,
+        ],
+    },
+    {
         id: "h264",
-        label: "Compress → MP4 (H.264)",
-        description: "Re-encode with libx264 at the configured CRF + AAC audio.",
+        label: "Re-encode → MP4 (high quality)",
+        description: "For compatibility, not size: keeps full resolution and near-original quality, so the file may get bigger.",
         accepts: ["video"],
         ext: "mp4",
         mime: "video/mp4",
