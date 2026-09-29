@@ -5,8 +5,7 @@
  *
  * Chat bar button (next to the gift/GIF/emoji buttons) that shows up while the
  * chat box has a convertible file waiting to be sent. Uses Vencord's
- * ChatButtons API, so unlike the hover button it doesn't depend on patching
- * Discord's code.
+ * ChatButtons API, so it doesn't depend on patching Discord's code.
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";

@@ -50,7 +50,7 @@ async function sourceBlob(src: ConvertSource): Promise<Blob> {
     switch (src.type) {
         case "upload": {
             const file = src.upload.item?.file;
-            if (!file) throw new Error("Couldn't read this file from the chat box. Try the Convert Media button next to the emoji button instead.");
+            if (!file) throw new Error("Couldn't read this file from the chat box. Try removing it and adding it again.");
             return file;
         }
         case "file": return src.file;
