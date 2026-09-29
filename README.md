@@ -18,6 +18,7 @@ A [Vencord](https://vencord.dev) / [Equicord](https://equicord.org) plugin that 
 - **Get the audio out of a video:** save it as MP3, FLAC or WAV
 - **Turn MKV/MOV videos into MP4:** instant and with no quality loss (for most files; if it fails, use *Compress* instead)
 - **Compress videos** so they're smaller to send (big videos are scaled down to 1080p; if a video can't get any smaller, your original is kept)
+- **Turn videos into GIFs:** with adjustable size and smoothness
 - **Turn GIFs into MP4 or WebM:** usually many times smaller
 
 ## How to use it

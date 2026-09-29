@@ -125,7 +125,8 @@ try {
             const src = await make(["-f", "lavfi", "-i", `testsrc2=duration=2:size=${size}:rate=15`,
                 "-c:v", "libx264", "-preset", "ultrafast", "-crf", "8"], "big.mp4", `big ${size}.mp4`, "video/mp4");
             const out = await ff.convert(src, src.name, getPreset("compress"));
-            compress.push({ size, in: src.size, out: out.size, dims: await dims(out) });
+            const gifOut = await ff.convert(src, src.name, getPreset("gif"));
+            compress.push({ size, in: src.size, out: out.size, dims: await dims(out), gifDims: await dims(gifOut), gifSize: gifOut.size });
         }
         probeFF.dispose();
         ff.dispose();
@@ -156,6 +157,7 @@ try {
         flac: h => String.fromCharCode(...h.slice(0, 4)) === "fLaC",
         wav: h => String.fromCharCode(...h.slice(0, 4)) === "RIFF",
         mp4: h => String.fromCharCode(...h.slice(4, 8)) === "ftyp",
+        gif: h => String.fromCharCode(...h.slice(0, 6)) === "GIF89a",
         webm: h => h[0] === 0x1a && h[1] === 0x45 && h[2] === 0xdf && h[3] === 0xa3, // EBML
     };
     for (const r of results.out) {
@@ -177,6 +179,10 @@ try {
             c.out < c.in && c.dims?.join("x") === expectDims[c.size].join("x"),
             { in: c.in, out: c.out, dims: c.dims });
     }
+    const expectGifDims = { "2560x1440": [480, 270], "1440x2560": [270, 480], "640x360": [480, 270] };
+    for (const c of results.compress)
+        check(`video → GIF ${c.size} → ${expectGifDims[c.size].join("x")}`, c.gifDims?.join("x") === expectGifDims[c.size].join("x"),
+            { dims: c.gifDims, bytes: c.gifSize });
     const gifExpect = {
         "gif-mp4 → mp3": /no audio track/, "gif-mp4 → remux-mp4": /^ok/, "gif-mp4 → compress": /^ok/,
         "gif-webm → mp3": /no audio track/, "gif-webm → remux-mp4": /Compress or Re-encode/, "gif-webm → compress": /^ok/,

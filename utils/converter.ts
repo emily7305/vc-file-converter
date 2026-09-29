@@ -54,6 +54,8 @@ export function getPresetOptions(): PresetOptions {
     return {
         crf: Math.round(settings.store.crf),
         compressCrf: Math.round(settings.store.compressCrf),
+        gifMaxSize: settings.store.gifMaxSize,
+        gifFps: Math.round(settings.store.gifFps),
         x264Preset: settings.store.x264Preset,
     };
 }

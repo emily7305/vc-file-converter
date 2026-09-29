@@ -29,6 +29,10 @@ export interface PresetOptions {
     crf: number;
     /** x264 CRF for the "Compress" preset. Higher = smaller. */
     compressCrf: number;
+    /** Video → GIF: longest side in px (smaller videos keep their size). */
+    gifMaxSize: number;
+    /** Video → GIF: frames per second. */
+    gifFps: number;
     /** x264 speed/efficiency trade-off. Slower presets are painfully slow in WASM. */
     x264Preset: string;
 }
@@ -36,6 +40,8 @@ export interface PresetOptions {
 export const DEFAULT_PRESET_OPTIONS: PresetOptions = {
     crf: 20,
     compressCrf: 28,
+    gifMaxSize: 480,
+    gifFps: 15,
     x264Preset: "veryfast",
 };
 
@@ -127,6 +133,22 @@ export const PRESETS: Preset[] = [
             "-c:a", "aac", "-b:a", "160k",
             o,
         ],
+    },
+    {
+        id: "gif",
+        label: "Video → GIF",
+        description: "Animated GIF with a custom colour palette for the best quality. Best for short clips: GIFs get big fast.",
+        accepts: ["video"],
+        ext: "gif",
+        mime: "image/gif",
+        args: (i, o, { gifMaxSize: max, gifFps: fps }) => {
+            // Longest side capped at `max`, aspect kept.
+            const scale = `scale=w='trunc(iw*min(1,${max}/max(iw,ih)))':h='trunc(ih*min(1,${max}/max(iw,ih)))':flags=lanczos`;
+            // GIFs only have 256 colours: build a palette from this video (palettegen), then map the
+            // frames onto it (paletteuse). diff_mode only redraws what changed, which keeps files smaller.
+            const palette = "split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle";
+            return ["-i", i, "-vf", `fps=${fps},${scale},${palette}`, "-loop", "0", o];
+        },
     },
     {
         id: "gif-mp4",

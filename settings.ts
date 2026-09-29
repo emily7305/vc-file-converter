@@ -31,6 +31,23 @@ export const settings = definePluginSettings({
             label: p.label, value: p.id, default: p.id === "gif-mp4",
         })),
     },
+    gifMaxSize: {
+        type: OptionType.SELECT,
+        description: "Video → GIF size (longest side). Bigger GIFs get large files quickly.",
+        options: [
+            { label: "Small (320 px)", value: 320 },
+            { label: "Medium (480 px)", value: 480, default: true },
+            { label: "Large (640 px)", value: 640 },
+            { label: "Extra large (800 px)", value: 800 },
+        ],
+    },
+    gifFps: {
+        type: OptionType.SLIDER,
+        description: "Video → GIF smoothness (frames per second). Higher = smoother but bigger.",
+        markers: [8, 10, 12, 15, 20, 25],
+        default: 15,
+        stickToMarkers: true,
+    },
     compressCrf: {
         type: OptionType.SLIDER,
         description: "Compress preset strength (CRF). Higher = smaller files but lower quality. 26-30 is a good balance.",
