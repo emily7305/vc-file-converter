@@ -12,6 +12,7 @@ import { saveFile } from "@utils/web";
 import { CloudUpload, ModalAction, RenderModalProps } from "@vencord/discord-types";
 import { Modal, openModal, showToast, Toasts, useEffect, useMemo, useRef, useState } from "@webpack/common";
 
+import { stripBanner } from "../ffmpeg/errors";
 import { AbortError, ConversionError, ConvertProgress } from "../ffmpeg/FFmpegService";
 import { detectMediaKind, MediaKind, presetsFor } from "../ffmpeg/presets";
 import { settings } from "../settings";
@@ -257,7 +258,12 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
                 {phase.name === "error" && (
                     <>
                         <div className={cl("error")}>{phase.message}</div>
-                        {phase.log.length > 0 && <pre className={cl("log")}>{phase.log.join("\n")}</pre>}
+                        {phase.log.length > 0 && (
+                            <details className={cl("details")}>
+                                <summary>Technical details</summary>
+                                <pre className={cl("log")}>{stripBanner(phase.log).join("\n")}</pre>
+                            </details>
+                        )}
                     </>
                 )}
             </div>

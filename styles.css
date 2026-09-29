@@ -90,6 +90,13 @@
     color: var(--text-danger, var(--red-400));
 }
 
+.vc-fconv-details summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
 .vc-fconv-log {
     max-height: 160px;
     overflow: auto;

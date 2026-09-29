@@ -11,6 +11,7 @@
  * browser test in test/worker.e2e.mjs.
  */
 
+import { explainFailure } from "./errors";
 import { DEFAULT_PRESET_OPTIONS, extensionOf, Preset, PresetOptions, replaceExtension } from "./presets";
 import { WORKER_SOURCE } from "./workerSource";
 
@@ -58,7 +59,7 @@ type WorkerMessage =
     | { type: "log"; data: { type: string; message: string; }; }
     | { type: "progress"; data: { progress: number; time: number; }; };
 
-const LOG_TAIL = 25;
+const LOG_TAIL = 60;
 
 export class FFmpegService {
     private worker: Worker | null = null;
@@ -216,7 +217,7 @@ export class FFmpegService {
             const args = preset.args(inPath, outPath, { ...DEFAULT_PRESET_OPTIONS, ...presetOptions });
             const code = await this.exec(args);
             if (code !== 0)
-                throw new ConversionError(`ffmpeg exited with code ${code}`, [...this.logTail]);
+                throw new ConversionError(explainFailure(this.logTail) ?? `ffmpeg exited with code ${code}`, [...this.logTail]);
 
             const out = await this.readFile(outPath);
             onProgress?.({ ratio: 1, seconds: 0 });

@@ -130,11 +130,24 @@ try {
         probeFF.dispose();
         ff.dispose();
 
+        // Videos made from GIFs: audio extraction has nothing to extract, and VP8 WebM can't be
+        // stream-copied into MP4. Both must fail with a plain-English message; compress must work.
+        await ff.load();
+        const gifFollowUps = {};
+        for (const first of ["gif-mp4", "gif-webm"]) {
+            const mid = await ff.convert(gif, gif.name, getPreset(first));
+            for (const id of ["mp3", "remux-mp4", "compress"]) {
+                gifFollowUps[`${first} → ${id}`] = await ff.convert(mid, mid.name, getPreset(id))
+                    .then(f => `ok ${f.size}`, e => e.message);
+            }
+        }
+        ff.dispose();
+
         const fallback = new FFmpegService({ coreBaseURL: coreBaseURL.replace("/core", "/core-plain") });
         const fallbackOk = await fallback.convert(mkv, mkv.name, getPreset("wav")).then(f => f.size > 0, e => e.message);
         fallback.dispose();
 
-        return { loadMs, out, abortResult, afterAbort, bad, fallbackOk, compress };
+        return { loadMs, out, abortResult, afterAbort, bad, fallbackOk, compress, gifFollowUps };
     }, `${base}/core`);
 
     console.log(`ffmpeg-core loaded in ${results.loadMs} ms`);
@@ -164,6 +177,12 @@ try {
             c.out < c.in && c.dims?.join("x") === expectDims[c.size].join("x"),
             { in: c.in, out: c.out, dims: c.dims });
     }
+    const gifExpect = {
+        "gif-mp4 → mp3": /no audio track/, "gif-mp4 → remux-mp4": /^ok/, "gif-mp4 → compress": /^ok/,
+        "gif-webm → mp3": /no audio track/, "gif-webm → remux-mp4": /Compress or Re-encode/, "gif-webm → compress": /^ok/,
+    };
+    for (const [k, re] of Object.entries(gifExpect))
+        check(k, re.test(results.gifFollowUps[k]), results.gifFollowUps[k]);
     check("fetch+eval fallback when importScripts is refused", results.fallbackOk === true, results.fallbackOk);
     check("bad input → ConversionError with log", results.bad?.name === "ConversionError" && results.bad.hasLog, results.bad);
 } finally {

@@ -10,6 +10,7 @@ import {
     presetsFor,
     replaceExtension,
 } from "../ffmpeg/presets.ts";
+import { explainFailure, stripBanner } from "../ffmpeg/errors.ts";
 
 test("detectMediaKind prefers MIME, falls back to extension", () => {
     assert.equal(detectMediaKind("a.gif", "image/gif"), "gif");
@@ -54,4 +55,17 @@ test("compress preset targets size, not fidelity", () => {
     const args = p.args("i", "o", { ...DEFAULT_PRESET_OPTIONS, compressCrf: 30 }).join(" ");
     assert.ok(args.includes("-crf 30") && args.includes("-b:a 128k") && args.includes("1080"));
     assert.ok(!getPreset("h264").mustShrink);
+});
+
+test("explainFailure maps common ffmpeg errors to plain English", () => {
+    assert.match(explainFailure(["Output #0, mp3, to 'out.mp3':", "Output file #0 does not contain any stream"]), /no audio track/);
+    assert.match(explainFailure(["Could not find tag for codec vp8 in stream #0, codec not currently supported in container"]), /Compress or Re-encode/);
+    assert.match(explainFailure(["in_0.mp4: Invalid data found when processing input"]), /valid media file/);
+    assert.equal(explainFailure(["something unexpected"]), null);
+});
+
+test("stripBanner drops the version banner", () => {
+    assert.deepEqual(stripBanner(["ffmpeg version 5.1.4", "  configuration: ...", "Input #0, gif, from 'in.gif':", "err"]),
+        ["Input #0, gif, from 'in.gif':", "err"]);
+    assert.deepEqual(stripBanner(["only", "lines"]), ["only", "lines"]);
 });
