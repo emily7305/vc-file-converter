@@ -50,4 +50,4 @@ Clone this repo into `src/userplugins/`, rebuild, then turn on FileConverter in 
 
 ## License
 
-MIT
+[MIT](LICENSE)
