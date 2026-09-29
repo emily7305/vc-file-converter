@@ -38,9 +38,12 @@ A progress bar shows a percentage when FFmpeg knows the input duration. For inpu
 > [!WARNING]
 > Reminder: installing a client mod goes against Discord's Terms of Service and **may get your account banned**. Continue only if you accept that risk.
 
-Follow Vencord's official guide: **[Installing custom plugins](https://docs.vencord.dev/installing/custom-plugins/)**. This repository is a folder plugin (it contains `index.tsx`), so it goes in `src/userplugins/` as a folder.
+Follow the official guide for your client mod:
 
-**Equicord** works exactly the same way, so follow the same guide in your Equicord folder. (Equicord's own docs are at [docs.equicord.org](https://docs.equicord.org).)
+- **Vencord:** [Installing custom plugins](https://docs.vencord.dev/installing/custom-plugins/)
+- **Equicord:** [Installing custom plugins](https://docs.equicord.org/installing/custom-plugin/)
+
+This repository is a folder plugin (it contains `index.tsx`), so it goes in `src/userplugins/` as a folder.
 
 Once it's built, enable **FileConverter** in your plugin settings.
 
