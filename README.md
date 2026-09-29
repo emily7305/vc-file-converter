@@ -45,7 +45,7 @@ Once it's built, enable **FileConverter** in your plugin settings.
 - **First use takes a moment:** the plugin downloads the converter (about 31 MB) the first time you convert something. After that it's saved and loads quickly.
 - **Big videos are slow:** compressing a long HD video can take several minutes. Audio extraction and MKV/MOV → MP4 are fast.
 - **Size limit:** files over 500 MB are skipped by default. You can change this in the plugin settings.
-- **Made for desktop:** the Discord desktop app, Vesktop and Equibop. It may not work in Discord in a web browser.
+- **Tested on the Discord desktop app with Vencord.** It should also work with Equicord, Vesktop and Equibop, but may not work in Discord in a web browser.
 
 ## License
 
