@@ -1,0 +1,20 @@
+{
+    "$comment": "Descriptive metadata for tooling and plugin indexes. Vencord/Equicord don't read this file: they load index.tsx from src/userplugins/<folder>/ and compile it from source.",
+    "id": "vencord-file-converter",
+    "name": "FileConverter",
+    "version": "0.1.0",
+    "description": "Convert, compress and transcode audio/video/GIF attachments locally with FFmpeg (WebAssembly), before sending or after receiving.",
+    "authors": ["emily7305"],
+    "license": "MIT",
+    "entry": "index.tsx",
+    "repository": "https://github.com/emily7305/vencord-file-converter",
+    "targets": ["vencord", "equicord"],
+    "platforms": ["discordDesktop", "vesktop", "web"],
+    "runtime": {
+        "package": "@ffmpeg/core",
+        "version": "0.12.10",
+        "build": "umd, single-threaded",
+        "cdn": "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/",
+        "loadedOn": "first conversion"
+    }
+}

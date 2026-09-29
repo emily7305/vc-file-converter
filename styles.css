@@ -1,0 +1,103 @@
+.vc-fconv-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--text-normal, var(--text-default));
+}
+
+.vc-fconv-muted {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.vc-fconv-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-fconv-preset {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-accent, var(--border-subtle));
+    cursor: pointer;
+}
+
+.vc-fconv-preset:hover {
+    background: var(--background-modifier-hover);
+}
+
+.vc-fconv-preset-selected {
+    border-color: var(--brand-500, var(--brand-experiment));
+}
+
+.vc-fconv-preset input {
+    margin-top: 3px;
+    accent-color: var(--brand-500, var(--brand-experiment));
+}
+
+.vc-fconv-preset-label {
+    font-weight: 500;
+}
+
+.vc-fconv-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-fconv-progress-track {
+    position: relative;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--background-modifier-accent, var(--background-tertiary));
+}
+
+.vc-fconv-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--brand-500, var(--brand-experiment));
+    transition: width 0.2s ease-out;
+}
+
+.vc-fconv-progress-indeterminate {
+    position: absolute;
+    width: 30%;
+    animation: vc-fconv-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes vc-fconv-slide {
+    from { left: -30%; }
+    to { left: 100%; }
+}
+
+.vc-fconv-progress-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.vc-fconv-success {
+    color: var(--text-positive, var(--green-360));
+}
+
+.vc-fconv-error {
+    color: var(--text-danger, var(--red-400));
+}
+
+.vc-fconv-log {
+    max-height: 160px;
+    overflow: auto;
+    margin: 0;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: var(--background-secondary);
+}

@@ -1,0 +1,11 @@
+{
+    // This repo is meant to live at <Vencord or Equicord>/src/userplugins/vencord-file-converter.
+    // Extending the host's tsconfig gives editors the exact same @api/@utils/@webpack path
+    // aliases and JSX settings that the host's esbuild pipeline uses to compile the plugin.
+    "extends": "../../../tsconfig.json",
+    "compilerOptions": {
+        "rootDir": "../../.."
+    },
+    "include": ["./**/*.ts", "./**/*.tsx", "../../../src/**/*.d.ts"],
+    "exclude": ["node_modules", "test"]
+}
