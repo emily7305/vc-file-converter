@@ -38,54 +38,11 @@ A progress bar shows a percentage when FFmpeg knows the input duration. For inpu
 > [!WARNING]
 > Reminder: installing a client mod goes against Discord's Terms of Service and **may get your account banned**. Continue only if you accept that risk.
 
-These steps assume you **already have Vencord or Equicord installed from source**, meaning you have a Vencord/Equicord folder on your computer that you built with `pnpm build` and installed with `pnpm inject` (or pointed Vesktop/Equibop at).
+Follow Vencord's official guide: **[Installing custom plugins](https://docs.vencord.dev/installing/custom-plugins/)**. This repository is a folder plugin (it contains `index.tsx`), so it goes in `src/userplugins/` as a folder.
 
-> [!IMPORTANT]
-> **Installed with the regular one-click installer instead?** Custom plugins can't be added to that version. Neither Vencord nor Equicord can load a plugin from a URL, so plugins have to be compiled in from source. Follow Vencord's [custom plugins guide](https://docs.vencord.dev/installing/custom-plugins/) (Equicord works the same way, see the [Equicord repo](https://github.com/Equicord/Equicord)) to switch to a source install first, then come back here.
+**Equicord** works exactly the same way, so follow the same guide in your Equicord folder. (Equicord's own docs are at [docs.equicord.org](https://docs.equicord.org).)
 
-### 1. Add the plugin
-
-Open a terminal **in your Vencord or Equicord folder** (the one containing `package.json` and `src/`) and run:
-
-```sh
-git clone https://github.com/emily7305/vencord-file-converter src/userplugins/vencord-file-converter
-```
-
-No `git`? Download this repo as a ZIP (**Code → Download ZIP**), unzip it, and move the folder to `src/userplugins/vencord-file-converter`. Make sure `index.tsx` sits directly inside that folder.
-
-### 2. Rebuild
-
-Still in the Vencord/Equicord folder:
-
-```sh
-pnpm build
-```
-
-You don't need to run `pnpm inject` again. Discord (or Vesktop/Equibop) already loads your build folder, so a rebuild is enough.
-
-### 3. Restart and enable
-
-Fully quit Discord (from the system tray too, not just the window) and open it again. Then go to:
-
-- **Vencord:** User Settings → **Vencord → Plugins**
-- **Equicord:** User Settings → **Equicord → Plugins**
-
-Search for **FileConverter** and switch it on.
-
-### Updating
-
-From the Vencord/Equicord folder:
-
-```sh
-git -C src/userplugins/vencord-file-converter pull
-pnpm build
-```
-
-Then restart Discord.
-
-### Uninstalling
-
-Delete `src/userplugins/vencord-file-converter`, run `pnpm build` and restart Discord.
+Once it's built, enable **FileConverter** in your plugin settings.
 
 ## How it works
 
