@@ -4,7 +4,9 @@
  * SPDX-License-Identifier: MIT
  */
 
-export function ConvertIcon({ width = 20, height = 20, className }: { width?: number; height?: number; className?: string; }) {
+import { IconComponent } from "@utils/types";
+
+export const ConvertIcon: IconComponent = ({ width = 20, height = 20, className }) => {
     // Two arrows in a loop: "transform this file".
     return (
         <svg className={className} width={width} height={height} viewBox="0 0 24 24" aria-hidden="true">
@@ -14,4 +16,4 @@ export function ConvertIcon({ width = 20, height = 20, className }: { width?: nu
             />
         </svg>
     );
-}
+};

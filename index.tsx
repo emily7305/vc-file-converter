@@ -9,7 +9,9 @@
 
 import definePlugin from "@utils/types";
 
+import { ConvertChatBarButton } from "./components/ChatBarButton";
 import { channelAttachMenuPatch, messageContextMenuPatch } from "./components/contextMenus";
+import { ConvertIcon } from "./components/icons";
 import { UploadConvertButton } from "./components/UploadButton";
 import { settings } from "./settings";
 import managedStyle from "./styles.css?managed";
@@ -26,7 +28,8 @@ export default definePlugin({
     patches: [
         {
             // The hover action bar on pending uploads (spoiler / edit / remove).
-            // Same anchor AnonymiseFileNames uses; if Discord breaks it, the "+" menu entry still works.
+            // Same anchor AnonymiseFileNames uses. Discord updates can break it; the chat bar button
+            // and the "+" menu entry don't depend on it.
             find: "#{intl::ATTACHMENT_UTILITIES_SPOILER}",
             replacement: {
                 match: /(?<=children:\[)(?=.{10,80}tooltip:.{0,100}#{intl::ATTACHMENT_UTILITIES_SPOILER})/,
@@ -34,6 +37,12 @@ export default definePlugin({
             },
         },
     ],
+
+    // Reliable entry point: Vencord's own chat bar API, no Discord code patch involved.
+    chatBarButton: {
+        icon: ConvertIcon,
+        render: ConvertChatBarButton,
+    },
 
     contextMenus: {
         "message": messageContextMenuPatch,

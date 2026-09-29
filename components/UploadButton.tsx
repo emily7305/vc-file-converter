@@ -26,7 +26,7 @@ export interface UploadActionBarProps {
 
 export const UploadConvertButton = ErrorBoundary.wrap((props: UploadActionBarProps) => {
     const { upload, draftType } = props;
-    if (props.canEdit === false || !upload?.item?.file) return null;
+    if (props.canEdit === false || !upload) return null;
     if (!detectMediaKind(upload.filename, upload.mimeType)) return null;
 
     return (

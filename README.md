@@ -22,7 +22,7 @@ A [Vencord](https://vencord.dev) / [Equicord](https://equicord.org) plugin that 
 
 ## How to use it
 
-- **Before sending:** hover over a file waiting to be sent in the chat box and click the **Convert Media** icon. The file is swapped for the converted one.
+- **Before sending:** add a file to the chat box, then click the **Convert Media** ⟳ button that appears next to the emoji button. The file is swapped for the converted one.
 - **From your computer:** right-click the **+** (upload) button and choose **Convert & Upload File…**
 - **Files other people sent:** right-click the message and choose **Convert Media**, then save the result or re-send it.
 
@@ -45,7 +45,6 @@ Once it's built, enable **FileConverter** in your plugin settings.
 - **First use takes a moment:** the plugin downloads the converter (about 31 MB) the first time you convert something. After that it's saved and loads quickly.
 - **Big videos are slow:** compressing a long HD video can take several minutes. Audio extraction and MKV/MOV → MP4 are fast.
 - **Size limit:** files over 500 MB are skipped by default. You can change this in the plugin settings.
-- **If the chat box button disappears** after a Discord update, the **+** menu option still works.
 - **Made for desktop:** the Discord desktop app, Vesktop and Equibop. It may not work in Discord in a web browser.
 
 ## License

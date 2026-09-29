@@ -37,7 +37,7 @@ type Phase =
 
 function sourceInfo(src: ConvertSource) {
     switch (src.type) {
-        case "upload": return { filename: src.upload.filename, mime: src.upload.mimeType ?? "", size: src.upload.item.file.size };
+        case "upload": return { filename: src.upload.filename, mime: src.upload.mimeType ?? "", size: src.upload.item?.file?.size ?? 0 };
         case "file": return { filename: src.file.name, mime: src.file.type, size: src.file.size };
         case "attachment": return { filename: src.filename, mime: src.mime ?? "", size: src.size };
     }
@@ -45,7 +45,11 @@ function sourceInfo(src: ConvertSource) {
 
 async function sourceBlob(src: ConvertSource): Promise<Blob> {
     switch (src.type) {
-        case "upload": return src.upload.item.file;
+        case "upload": {
+            const file = src.upload.item?.file;
+            if (!file) throw new Error("Couldn't read this file from the chat box. Try the Convert Media button next to the emoji button instead.");
+            return file;
+        }
         case "file": return src.file;
         case "attachment": return fetchAttachment(src.url);
     }
