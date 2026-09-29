@@ -2,9 +2,6 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Preset picker → progress bar → result, built on Discord's current Modal
- * component (exported as `Modal` from @webpack/common in both Vencord and Equicord).
  */
 
 import { classNameFactory } from "@utils/css";
@@ -20,13 +17,12 @@ import { checkInputSize, fetchAttachment, ffmpeg, getPresetOptions, loadFFmpeg, 
 
 const cl = classNameFactory("vc-fconv-");
 
-/** Where the input comes from decides what we do with the output. */
 export type ConvertSource =
-    /** A pending upload in the chat bar: replace it in place. */
+    // file in the chat box, gets replaced
     | { type: "upload"; upload: CloudUpload; draftType?: number; }
-    /** A file picked from disk via the "+" menu: add it to the queue. */
+    // picked from the + menu
     | { type: "file"; file: File; channelId: string; }
-    /** A received attachment: save to disk, or re-queue in the current channel. */
+    // someone else's attachment
     | { type: "attachment"; url: string; filename: string; mime?: string; size: number; channelId: string; };
 
 type Phase =
@@ -34,7 +30,6 @@ type Phase =
     | { name: "loading"; }
     | { name: "converting"; progress: ConvertProgress; }
     | { name: "done"; file: File; }
-    /** A "make it smaller" preset produced a file that isn't smaller. */
     | { name: "not-smaller"; file: File; }
     | { name: "error"; message: string; log: string[]; };
 
@@ -116,7 +111,7 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
     const [phase, setPhase] = useState<Phase>({ name: "pick" });
     const abortRef = useRef<AbortController | null>(null);
 
-    // Cancel a running job if the modal is closed (Esc / click outside).
+    // cancel if the modal gets closed
     useEffect(() => () => abortRef.current?.abort(), []);
 
     const preset = presets.find(p => p.id === presetId);
@@ -144,7 +139,7 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
             else
                 finish(file);
         } catch (e) {
-            // After a cancel, late failures (e.g. the core download finishing with an error) are irrelevant.
+            // ignore errors that come in after cancelling
             if (e instanceof AbortError || abort.signal.aborted) return;
             logger.error("Conversion failed", e);
             setPhase({

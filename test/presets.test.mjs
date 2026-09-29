@@ -1,4 +1,4 @@
-// Pure unit tests for the preset layer. Run with `npm test` (Node >= 22.18 strips TS types natively).
+// npm test (needs node 22.18+ for the .ts imports)
 import assert from "node:assert/strict";
 import { test } from "node:test";
 

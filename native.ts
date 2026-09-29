@@ -2,14 +2,10 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Runs in Discord's main (Node) process. Discord's CDN doesn't send CORS
- * headers for the discord.com origin, so fetching a received attachment from
- * the renderer fails with "Failed to fetch". Downloading it from here isn't
- * subject to CORS.
  */
 
-// Only ever fetch Discord's own attachment hosts, so this can't be abused as a generic proxy.
+// fetching attachments from the renderer fails because of CORS, so it's done here instead.
+// only discord's own cdn is allowed so this can't be used to fetch random urls
 const ALLOWED_HOSTS = new Set(["cdn.discordapp.com", "media.discordapp.net"]);
 
 export async function fetchAttachment(_: unknown, url: string, maxBytes: number): Promise<Uint8Array> {

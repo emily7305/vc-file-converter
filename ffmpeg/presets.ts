@@ -2,9 +2,6 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Conversion presets. This module is intentionally free of Vencord/Discord
- * imports so it can be unit tested with plain Node (see test/presets.test.mjs).
  */
 
 export type MediaKind = "video" | "audio" | "gif";
@@ -13,27 +10,26 @@ export interface Preset {
     id: string;
     label: string;
     description: string;
-    /** Media kinds this preset makes sense for (used to filter the picker). */
+    /** which file types show this preset */
     accepts: MediaKind[];
-    /** Output file extension, without the dot. */
+    /** without the dot */
     ext: string;
     mime: string;
-    /** Full ffmpeg argument list (excluding the leading `ffmpeg`). */
+
     args(input: string, output: string, opts: PresetOptions): string[];
-    /** The whole point is a smaller file: if the output isn't smaller, keep the original. */
+    /** keep the original if the result isn't smaller */
     mustShrink?: boolean;
 }
 
 export interface PresetOptions {
-    /** x264 constant rate factor, 0 (lossless) – 51 (worst), for high-quality re-encodes. */
+    /** x264 crf (0-51, lower = better) for the high quality preset + gifs */
     crf: number;
-    /** x264 CRF for the "Compress" preset. Higher = smaller. */
+    /** crf for compress */
     compressCrf: number;
-    /** Video → GIF: longest side in px (smaller videos keep their size). */
+    /** gif max width/height */
     gifMaxSize: number;
-    /** Video → GIF: frames per second. */
     gifFps: number;
-    /** x264 speed/efficiency trade-off. Slower presets are painfully slow in WASM. */
+    /** slow presets are REALLY slow in wasm */
     x264Preset: string;
 }
 
@@ -45,12 +41,7 @@ export const DEFAULT_PRESET_OPTIONS: PresetOptions = {
     x264Preset: "veryfast",
 };
 
-/**
- * The single-threaded WASM build is roughly 10-20x slower than native ffmpeg,
- * so every H.264 preset pins `-pix_fmt yuv420p` (widest player support) and
- * `+faststart` (moov atom up front so Discord can start playback while
- * streaming).
- */
+// yuv420p so it plays everywhere, faststart so discord can start playing before it's fully loaded
 const H264_OUTPUT = (opts: PresetOptions, crf = opts.crf) => [
     "-c:v", "libx264",
     "-preset", opts.x264Preset,
@@ -59,18 +50,17 @@ const H264_OUTPUT = (opts: PresetOptions, crf = opts.crf) => [
     "-movflags", "+faststart",
 ];
 
-// libx264 with yuv420p needs even dimensions; GIFs frequently have odd ones.
+// x264 needs even width/height, gifs often aren't
 const EVEN_DIMENSIONS = ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"];
 
-// Shrink so the short side is at most 1080 px (4K/1440p phone videos → 1080p), keeping the
-// aspect ratio and even dimensions. Smaller videos are left at their size.
+// max 1080p (short side), smaller videos stay the same
 const MAX_1080P = ["-vf", "scale=w='trunc(iw*min(1,1080/min(iw,ih))/2)*2':h='trunc(ih*min(1,1080/min(iw,ih))/2)*2'"];
 
 export const PRESETS: Preset[] = [
     {
         id: "mp3",
         label: "Extract audio → MP3",
-        description: "VBR highest quality (-q:a 0). Drops the video stream.",
+        description: "Best quality MP3",
         accepts: ["video", "audio"],
         ext: "mp3",
         mime: "audio/mpeg",
@@ -79,7 +69,7 @@ export const PRESETS: Preset[] = [
     {
         id: "flac",
         label: "Extract audio → FLAC",
-        description: "Lossless compressed audio.",
+        description: "Lossless",
         accepts: ["video", "audio"],
         ext: "flac",
         mime: "audio/flac",
@@ -88,7 +78,7 @@ export const PRESETS: Preset[] = [
     {
         id: "wav",
         label: "Extract audio → WAV",
-        description: "Uncompressed 16-bit PCM. Large files!",
+        description: "Uncompressed, big files",
         accepts: ["video", "audio"],
         ext: "wav",
         mime: "audio/wav",
@@ -97,7 +87,7 @@ export const PRESETS: Preset[] = [
     {
         id: "remux-mp4",
         label: "Remux → MP4 (lossless, instant)",
-        description: "Stream copy (-c copy). Only works if the codecs are MP4-compatible (e.g. H.264/AAC in MKV/MOV).",
+        description: "Instant and lossless, but doesn't work for every video",
         accepts: ["video"],
         ext: "mp4",
         mime: "video/mp4",
@@ -106,7 +96,7 @@ export const PRESETS: Preset[] = [
     {
         id: "compress",
         label: "Compress → MP4 (smaller file)",
-        description: "Shrinks the file for sending: H.264, max 1080p, 128k audio. If it can't get smaller, your original is kept.",
+        description: "Smaller file, max 1080p",
         accepts: ["video"],
         ext: "mp4",
         mime: "video/mp4",
@@ -122,7 +112,7 @@ export const PRESETS: Preset[] = [
     {
         id: "h264",
         label: "Re-encode → MP4 (high quality)",
-        description: "For compatibility, not size: keeps full resolution and near-original quality, so the file may get bigger.",
+        description: "Fixes videos that won't play. File might get bigger",
         accepts: ["video"],
         ext: "mp4",
         mime: "video/mp4",
@@ -137,15 +127,13 @@ export const PRESETS: Preset[] = [
     {
         id: "gif",
         label: "Video → GIF",
-        description: "Animated GIF with a custom colour palette for the best quality. Best for short clips: GIFs get big fast.",
+        description: "Best for short clips, GIFs get big fast",
         accepts: ["video"],
         ext: "gif",
         mime: "image/gif",
         args: (i, o, { gifMaxSize: max, gifFps: fps }) => {
-            // Longest side capped at `max`, aspect kept.
             const scale = `scale=w='trunc(iw*min(1,${max}/max(iw,ih)))':h='trunc(ih*min(1,${max}/max(iw,ih)))':flags=lanczos`;
-            // GIFs only have 256 colours: build a palette from this video (palettegen), then map the
-            // frames onto it (paletteuse). diff_mode only redraws what changed, which keeps files smaller.
+            // gifs only get 256 colours so generate a palette from the video first
             const palette = "split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle";
             return ["-i", i, "-vf", `fps=${fps},${scale},${palette}`, "-loop", "0", o];
         },
@@ -153,7 +141,7 @@ export const PRESETS: Preset[] = [
     {
         id: "gif-mp4",
         label: "GIF → MP4",
-        description: "Usually 5-20x smaller than the GIF.",
+        description: "Way smaller than the GIF",
         accepts: ["gif"],
         ext: "mp4",
         mime: "video/mp4",
@@ -162,14 +150,14 @@ export const PRESETS: Preset[] = [
     {
         id: "gif-webm",
         label: "GIF → WebM (VP8)",
-        description: "Plays everywhere WebM does. VP8 because libvpx-vp9 crashes in the single-threaded @ffmpeg/core 0.12 build.",
+        description: "WebM version (VP8)",
         accepts: ["gif"],
         ext: "webm",
         mime: "video/webm",
         args: (i, o, opts) => [
             "-i", i,
             "-c:v", "libvpx",
-            // VP8 CRF is 4-63 and needs a bitrate ceiling; x264 CRF 20 ≈ VP8 CRF 10.
+            // vp8 crf range is 4-63 and it needs a max bitrate
             "-crf", String(Math.min(63, Math.max(4, opts.crf - 10))), "-b:v", "4M",
             "-deadline", "good", "-cpu-used", "4",
             "-pix_fmt", "yuv420p",
@@ -191,7 +179,7 @@ export function extensionOf(filename: string): string {
     return dot === -1 ? "" : filename.slice(dot + 1).toLowerCase();
 }
 
-/** Classify a file by MIME type, falling back to its extension. */
+
 export function detectMediaKind(filename: string, mime = ""): MediaKind | null {
     const ext = extensionOf(filename);
     if (mime === "image/gif" || ext === "gif") return "gif";
@@ -204,7 +192,7 @@ export function presetsFor(kind: MediaKind): Preset[] {
     return PRESETS.filter(p => p.accepts.includes(kind));
 }
 
-/** `clip.final.MKV` + `mp4` → `clip.final.mp4` */
+// clip.final.MKV -> clip.final.mp4
 export function replaceExtension(filename: string, ext: string): string {
     const dot = filename.lastIndexOf(".");
     const base = dot > 0 ? filename.slice(0, dot) : filename;

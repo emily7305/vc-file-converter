@@ -2,20 +2,10 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Source of the Web Worker that hosts ffmpeg-core.
- *
- * Why not use @ffmpeg/ffmpeg's own worker? Its ESM worker does relative
- * imports (`./const.js`, `./errors.js`) and is spawned via
- * `new URL("./worker.js", import.meta.url)`. Neither survives being inlined into
- * Vencord's single IIFE bundle, and a cross-origin worker URL is not allowed.
- * This is a dependency-free port of the same protocol (~60 lines) that we spawn
- * from a Blob URL instead.
- *
- * It is a plain string (not a function we `.toString()`) so bundler
- * transforms such as esbuild's `keepNames` helpers can never leak references to
- * the outer bundle into the worker scope.
  */
+
+// @ffmpeg/ffmpeg's worker breaks when bundled by vencord (relative imports + import.meta.url),
+// so this is a small copy of it that runs from a blob url. kept as a string so esbuild can't mess with it
 
 export const WORKER_SOURCE = /* js */ `
 "use strict";
@@ -23,12 +13,9 @@ let core = null;
 
 async function importCore(coreURL) {
     try {
-        // Works when the CDN host is allowed by script-src (Vencord allows cdn.jsdelivr.net).
         importScripts(coreURL);
     } catch {
-        // Fallback for hosts that are only allowed by connect-src (the only kind of rule a plugin can
-        // ask Vencord to add): fetch the script and evaluate it globally. Discord's CSP, as patched by
-        // Vencord, includes 'unsafe-eval' (also needed to compile the wasm itself).
+        // for custom urls that are only allowed in connect-src
         const res = await fetch(coreURL);
         if (!res.ok) throw new Error("Failed to fetch ffmpeg-core.js: HTTP " + res.status);
         (0, eval)(await res.text() + "\\n//# sourceURL=" + coreURL);
@@ -40,7 +27,7 @@ async function importCore(coreURL) {
 async function load({ coreURL, wasmURL }) {
     if (core) return false;
     await importCore(coreURL);
-    // ffmpeg-core's locateFile() reads the wasm URL from base64 JSON in the hash.
+    // ffmpeg-core reads the wasm url from the hash
     core = await self.createFFmpegCore({
         mainScriptUrlOrBlob: coreURL + "#" + btoa(JSON.stringify({ wasmURL, workerURL: "" })),
     });

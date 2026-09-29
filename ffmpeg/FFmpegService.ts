@@ -2,33 +2,28 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Owns the ffmpeg-core Web Worker: lazy loading, a tiny RPC layer, a job queue
- * (the WASM instance has a single virtual FS and can run one command at a
- * time), progress reporting and cleanup of virtual files.
- *
- * Deliberately free of Vencord imports so it can be bundled standalone for the
- * browser test in test/worker.e2e.mjs.
  */
+
+// no vencord imports in here so test/worker.e2e.mjs can bundle it on its own
 
 import { explainFailure } from "./errors";
 import { DEFAULT_PRESET_OPTIONS, extensionOf, Preset, PresetOptions, replaceExtension } from "./presets";
 import { WORKER_SOURCE } from "./workerSource";
 
 export const FFMPEG_CORE_VERSION = "0.12.10";
-/** cdn.jsdelivr.net is on Vencord's built-in CSP allowlist (connect-src, script-src, worker-src). */
+// jsdelivr is on vencord's csp allowlist
 export const DEFAULT_CORE_BASE_URL = `https://cdn.jsdelivr.net/npm/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/umd`;
 
 export interface FFmpegServiceConfig {
-    /** Directory containing ffmpeg-core.js and ffmpeg-core.wasm (UMD, single-threaded build). */
+    /** folder with ffmpeg-core.js + ffmpeg-core.wasm (umd build) */
     coreBaseURL?: string;
     onLog?(line: string): void;
 }
 
 export interface ConvertProgress {
-    /** 0..1, or null while ffmpeg can't estimate it yet (e.g. unknown duration). */
+    /** 0-1, null if the duration is unknown */
     ratio: number | null;
-    /** Media timestamp processed so far, in seconds. */
+    /** seconds processed so far */
     seconds: number;
 }
 
@@ -69,7 +64,6 @@ export class FFmpegService {
     private queue: Promise<unknown> = Promise.resolve();
     private jobCounter = 0;
 
-    // Per-job listeners, set while a job is running.
     private progressListener: ((p: ConvertProgress) => void) | null = null;
     private logTail: string[] = [];
 
@@ -82,10 +76,10 @@ export class FFmpegService {
     setCoreBaseURL(url: string | undefined) {
         if ((url || undefined) === this.config.coreBaseURL) return;
         this.config.coreBaseURL = url || undefined;
-        this.dispose(); // next load picks up the new URL
+        this.dispose();
     }
 
-    /** Spawn the worker and load ffmpeg-core (~31 MB wasm, cached by the browser after the first fetch). */
+    // ~31mb download the first time, cached after that
     load(): Promise<void> {
         if (this.worker && !this.loading) return Promise.resolve();
         return this.loading ??= this.spawn().finally(() => { this.loading = null; });
@@ -95,7 +89,6 @@ export class FFmpegService {
         const base = (this.config.coreBaseURL || DEFAULT_CORE_BASE_URL).replace(/\/+$/, "");
         const workerURL = URL.createObjectURL(new Blob([WORKER_SOURCE], { type: "text/javascript" }));
         const worker = new Worker(workerURL, { name: "vc-file-converter-ffmpeg" });
-        // Revoking right away is fine: the worker script is fetched synchronously on construction.
         URL.revokeObjectURL(workerURL);
 
         worker.onmessage = ({ data }: MessageEvent<WorkerMessage>) => this.onMessage(data);
@@ -125,8 +118,7 @@ export class FFmpegService {
                 this.config.onLog?.(msg.data.message);
                 return;
             case "progress": {
-                // ffmpeg-core reports progress from the parsed input duration, which can be
-                // negative or > 1 when the duration is unknown (common with GIFs / live WebM).
+                // progress is garbage (<0 or >1) when ffmpeg doesn't know the duration, e.g. gifs
                 const { progress, time } = msg.data;
                 const ratio = Number.isFinite(progress) && progress >= 0 && progress <= 1 ? progress : null;
                 this.progressListener?.({ ratio, seconds: Math.max(0, time / 1e6) });
@@ -158,8 +150,6 @@ export class FFmpegService {
         this.pending.clear();
     }
 
-    // ---- Thin wrappers around the virtual FS / exec ----
-
     writeFile(path: string, data: Uint8Array) {
         return this.call<boolean>("writeFile", { path, data }, [data.buffer]);
     }
@@ -172,19 +162,11 @@ export class FFmpegService {
         return this.call<boolean>("deleteFile", { path });
     }
 
-    /** Runs ffmpeg with the given args, returns its exit code. */
     exec(args: string[], timeout = -1) {
         return this.call<number>("exec", { args, timeout });
     }
 
-    // ---- High-level API ----
-
-    /**
-     * Convert a file with a preset. Jobs are serialised; a queued job whose
-     * signal is aborted is skipped. Aborting a *running* job terminates the
-     * worker (the only way to interrupt synchronous WASM), so the next job pays
-     * the load cost again.
-     */
+    // one job at a time. cancelling a running job has to kill the worker since wasm can't be interrupted
     convert(input: Blob, filename: string, preset: Preset, opts: ConvertOptions = {}): Promise<File> {
         const job = this.queue.then(() => this.runJob(input, filename, preset, opts));
         this.queue = job.catch(() => { });
@@ -201,7 +183,7 @@ export class FFmpegService {
         signal?.addEventListener("abort", onAbort, { once: true });
 
         const n = this.jobCounter++;
-        // Never pass user file names to ffmpeg: spaces/unicode/leading dashes can break arg parsing.
+        // don't give ffmpeg the real file names, weird characters break the args
         const inPath = `in_${n}.${extensionOf(filename) || "bin"}`;
         const outPath = `out_${n}.${preset.ext}`;
 
@@ -223,22 +205,20 @@ export class FFmpegService {
             onProgress?.({ ratio: 1, seconds: 0 });
             return new File([out as BlobPart], replaceExtension(filename, preset.ext), { type: preset.mime });
         } catch (e) {
-            // A failed exec can leave the WASM heap corrupted (later calls die with "memory access out
-            // of bounds"), so never reuse an instance after a failure. Reloading hits the HTTP cache.
+            // after a failure the wasm memory can be broken ("memory access out of bounds" on the
+            // next run), so always start fresh
             this.dispose();
             throw e;
         } finally {
             signal?.removeEventListener("abort", onAbort);
             this.progressListener = null;
-            // Free the (potentially huge) virtual files. Ignore failures: the output may not exist,
-            // and after an abort the worker (and its whole heap) is already gone.
+            // clean up the virtual files (might not exist, or the worker's already dead)
             if (this.worker) {
                 await Promise.allSettled([this.deleteFile(inPath), this.deleteFile(outPath)]);
             }
         }
     }
 
-    /** Terminate the worker and free all WASM memory. Safe to call at any time. */
     dispose() {
         this.worker?.terminate();
         this.worker = null;

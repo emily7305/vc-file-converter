@@ -2,8 +2,6 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Glue between the FFmpeg service, plugin settings and Discord's upload queue.
  */
 
 import { Logger } from "@utils/Logger";
@@ -20,15 +18,11 @@ export const ffmpeg = new FFmpegService({
     onLog: line => logger.debug(line),
 });
 
-// Plugins may only request connect/img/style/font rules; connect-src is all the worker's
-// fetch-and-eval fallback needs (script-src 'unsafe-eval' is already granted by Vencord).
+// plugins can't request script-src, but connect-src is enough for the worker's eval fallback
 const CSP_DIRECTIVES = ["connect-src"];
 
-/**
- * Vencord (desktop / Vesktop) rewrites Discord's CSP. jsDelivr is allowed out of
- * the box; a custom core URL has to be approved by the user once and needs a
- * restart. On the web extension `VencordNative.csp` doesn't exist and we just try.
- */
+// jsdelivr is already allowed by vencord. a custom url needs approving once (+ restart).
+// VencordNative.csp doesn't exist on web, just try anyway there
 async function ensureCspAllows(baseURL: string) {
     const { csp } = (globalThis as any).VencordNative ?? {};
     if (!csp) return;
@@ -66,21 +60,21 @@ export function checkInputSize(size: number) {
         throw new Error(`File is ${(size / 1048576).toFixed(0)} MB; the limit is ${max} MB (see plugin settings).`);
 }
 
-/** Add a file to a channel's upload queue exactly as if the user had picked it. */
+// same as picking the file normally
 export function queueUpload(file: File, channelId: string, draftType = DraftType.ChannelMessage) {
     const channel = ChannelStore.getChannel(channelId);
     if (!channel) throw new Error("Channel not found");
     UploadHandler.promptToUpload([file], channel, draftType);
 }
 
-/** Swap a pending (not yet sent) upload for the converted file. */
+
 export function replaceUpload(upload: CloudUpload, file: File, draftType = DraftType.ChannelMessage) {
     const { channelId } = upload;
 
     if (typeof UploadManager.remove === "function") {
         UploadManager.remove(channelId, upload.id, draftType);
     } else {
-        // Fallback in case Discord renames the action creator.
+        // in case discord renames remove()
         FluxDispatcher.dispatch({ type: "UPLOAD_ATTACHMENT_REMOVE_FILE", channelId, id: upload.id, draftType });
     }
 
@@ -89,11 +83,7 @@ export function replaceUpload(upload: CloudUpload, file: File, draftType = Draft
 
 type NativeHelpers = { fetchAttachment(url: string, maxBytes: number): Promise<Uint8Array>; };
 
-/**
- * Download a received attachment. Discord's CDN rejects cross-origin requests from the client
- * ("Failed to fetch"), so on desktop this goes through native.ts in the main process. The web
- * build has no native side and falls back to a plain fetch.
- */
+// goes through native.ts on desktop (CORS), plain fetch on web
 export async function fetchAttachment(url: string): Promise<Blob> {
     const native: NativeHelpers | undefined = (globalThis as any).VencordNative?.pluginHelpers?.FileConverter;
     if (native) {
@@ -106,7 +96,7 @@ export async function fetchAttachment(url: string): Promise<Blob> {
     return res.blob();
 }
 
-/** Files waiting in the chat box that we know how to convert. */
+
 export function getPendingMediaUploads(channelId: string, draftType = DraftType.ChannelMessage): CloudUpload[] {
     return (UploadAttachmentStore.getUploads(channelId, draftType) ?? [])
         .filter(u => u.item?.file && detectMediaKind(u.filename, u.mimeType));

@@ -2,10 +2,6 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Chat bar button (next to the gift/GIF/emoji buttons) that shows up while the
- * chat box has a convertible file waiting to be sent. Uses Vencord's
- * ChatButtons API, so it doesn't depend on patching Discord's code.
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
@@ -16,7 +12,7 @@ import { openConvertModal } from "./ConvertModal";
 import { ConvertIcon } from "./icons";
 
 export const ConvertChatBarButton: ChatBarButtonFactory = ({ isAnyChat, type, channel }) => {
-    // Subscribe to a primitive so the store hook doesn't see a "new" value on every call.
+    // returning an array here re-renders forever, so use a string
     const uploadIds = useStateFromStores([UploadAttachmentStore], () =>
         getPendingMediaUploads(channel.id).map(u => u.id).join(","));
 
@@ -29,7 +25,7 @@ export const ConvertChatBarButton: ChatBarButtonFactory = ({ isAnyChat, type, ch
             onClick={e => {
                 if (uploads.length === 1) return openConvertModal({ type: "upload", upload: uploads[0] });
 
-                // Several files queued: let the user pick which one to convert.
+                // more than one file, ask which
                 ContextMenuApi.openContextMenu(e, () => (
                     <Menu.Menu
                         navId="vc-fconv-pick-upload"

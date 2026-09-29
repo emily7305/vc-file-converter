@@ -7,7 +7,6 @@
 import { IconComponent } from "@utils/types";
 
 export const ConvertIcon: IconComponent = ({ width = 20, height = 20, className }) => {
-    // Two arrows in a loop: "transform this file".
     return (
         <svg className={className} width={width} height={height} viewBox="0 0 24 24" aria-hidden="true">
             <path

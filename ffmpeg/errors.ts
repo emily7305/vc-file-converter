@@ -2,10 +2,9 @@
  * vencord-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
- *
- * Turns ffmpeg's log output into a short explanation a normal person can act
- * on. Pure (no Vencord imports) so it's unit-testable.
  */
+
+// turn common ffmpeg errors into something readable
 
 const EXPLANATIONS: [RegExp, string][] = [
     [
@@ -31,10 +30,7 @@ export function explainFailure(log: string[]): string | null {
     return EXPLANATIONS.find(([re]) => re.test(text))?.[1] ?? null;
 }
 
-/**
- * Drop ffmpeg's version/build-configuration banner (everything before the first
- * "Input #"), which is noise for anyone reading an error.
- */
+// cut off the version/config spam at the start of the log
 export function stripBanner(log: string[]): string[] {
     const start = log.findIndex(l => /^\s*Input #/.test(l));
     return start > 0 ? log.slice(start) : log;

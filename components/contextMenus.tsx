@@ -34,12 +34,12 @@ function openForAttachment(a: Attachment, message: Message) {
         filename: a.filename,
         mime: a.content_type,
         size: a.size,
-        // Converted files go to the channel you're looking at, which is usually where you right-clicked.
+        // usually the same channel anyway
         channelId: SelectedChannelStore.getChannelId() ?? message.channel_id,
     });
 }
 
-/** Right-click a message → "Convert Media" (a submenu if it has several media attachments). */
+
 export const messageContextMenuPatch: NavContextMenuPatchCallback = (children, props: { message?: Message; itemHref?: string; itemSrc?: string; }) => {
     const { message } = props;
     if (!message) return;
@@ -47,7 +47,7 @@ export const messageContextMenuPatch: NavContextMenuPatchCallback = (children, p
     const attachments = convertibleAttachments(message);
     if (!attachments.length) return;
 
-    // If the user right-clicked a specific attachment, target just that one.
+    // only use the attachment that was right clicked, if there was one
     const clicked = [props.itemHref, props.itemSrc].filter(Boolean) as string[];
     const target = attachments.find(a => clicked.some(url => url.includes(`/${a.id}/`)));
     const list = target ? [target] : attachments;
@@ -78,7 +78,7 @@ export const messageContextMenuPatch: NavContextMenuPatchCallback = (children, p
     );
 };
 
-/** Right-click the "+" (upload) button → "Convert & Upload File…". Works even if the action-bar patch breaks. */
+
 export const channelAttachMenuPatch: NavContextMenuPatchCallback = (children, props: { channel?: Channel; }) => {
     const { channel } = props;
     if (!channel) return;
