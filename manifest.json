@@ -1,5 +1,5 @@
 {
-    "id": "vencord-file-converter",
+    "id": "vc-file-converter",
     "name": "FileConverter",
     "version": "0.1.0",
     "description": "Convert and compress videos, audio and GIFs right in Discord",
@@ -8,7 +8,7 @@
     ],
     "license": "MIT",
     "entry": "index.tsx",
-    "repository": "https://github.com/emily7305/vencord-file-converter",
+    "repository": "https://github.com/emily7305/vc-file-converter",
     "targets": [
         "vencord",
         "equicord"

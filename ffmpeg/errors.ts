@@ -1,5 +1,5 @@
 /*
- * vencord-file-converter
+ * vc-file-converter
  * Copyright (c) 2026 emily7305
  * SPDX-License-Identifier: MIT
  */

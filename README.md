@@ -1,4 +1,4 @@
-# vencord-file-converter
+# vc-file-converter
 
 > [!CAUTION]
 > ## ⚠️ USE AT YOUR OWN RISK ⚠️

@@ -1,16 +1,16 @@
 {
-    "name": "vencord-file-converter",
+    "name": "vc-file-converter",
     "version": "0.1.0",
     "private": true,
     "description": "Vencord/Equicord userplugin: convert and transcode media in Discord with FFmpeg WebAssembly",
     "license": "MIT",
     "author": "emily7305",
-    "repository": "github:emily7305/vencord-file-converter",
+    "repository": "github:emily7305/vc-file-converter",
     "scripts": {
         "test": "node --test test/presets.test.mjs",
         "test:e2e": "node test/worker.e2e.mjs",
-        "typecheck": "cd ../../.. && pnpm exec tsc --noEmit -p src/userplugins/vencord-file-converter/tsconfig.json",
-        "lint": "cd ../../.. && pnpm exec eslint --rule \"simple-header/header: off\" --ignore-pattern \"src/userplugins/vencord-file-converter/test/**\" src/userplugins/vencord-file-converter"
+        "typecheck": "cd ../../.. && pnpm exec tsc --noEmit -p src/userplugins/vc-file-converter/tsconfig.json",
+        "lint": "cd ../../.. && pnpm exec eslint --rule \"simple-header/header: off\" --ignore-pattern \"src/userplugins/vc-file-converter/test/**\" src/userplugins/vc-file-converter"
     },
     "devDependencies": {
         "@ffmpeg/core": "0.12.10",
