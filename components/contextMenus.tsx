@@ -59,12 +59,12 @@ export const messageContextMenuPatch: NavContextMenuPatchCallback = (children, p
                 <Menu.MenuItem
                     id="vc-fconv-convert"
                     label="Convert Media"
-                    icon={ConvertIcon}
+                    leadingAccessory={{ type: "icon", icon: ConvertIcon }}
                     action={() => openForAttachment(list[0], message)}
                 />
             )
             : (
-                <Menu.MenuItem id="vc-fconv-convert" label="Convert Media" icon={ConvertIcon}>
+                <Menu.MenuItem id="vc-fconv-convert" label="Convert Media" leadingAccessory={{ type: "icon", icon: ConvertIcon }}>
                     {list.map(a => (
                         <Menu.MenuItem
                             key={a.id}
@@ -86,8 +86,8 @@ export const channelAttachMenuPatch: NavContextMenuPatchCallback = (children, pr
     children.push(
         <Menu.MenuItem
             id="vc-fconv-convert-upload"
-            label="Convert & Upload File…"
-            icon={ConvertIcon}
+            label="Convert a File"
+            leadingAccessory={{ type: "icon", icon: ConvertIcon }}
             action={async () => {
                 const file = await chooseFile("video/*,audio/*,image/gif,.mkv,.mov,.flac");
                 if (file) openConvertModal({ type: "file", file, channelId: channel.id });

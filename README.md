@@ -26,7 +26,7 @@ A [Vencord](https://vencord.dev) / [Equicord](https://equicord.org) plugin for c
 There are 3 ways to use it:
 
 1. Drop a file into the chat box like normal and click the Convert Media button next to the emoji picker. The file gets replaced with the converted one.
-2. Right-click the + button and pick "Convert & Upload File…"
+2. Click the + button next to the chat box and pick "Convert a File"
 3. Right-click a message with a video/audio file and pick "Convert Media". You can save the result or add it to your upload queue.
 
 ## Installation
