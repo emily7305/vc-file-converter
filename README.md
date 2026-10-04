@@ -48,6 +48,12 @@ Clone this repo into `src/userplugins/`, rebuild, then turn on FileConverter in 
 - Files over 500 MB are skipped by default, you can change that in the settings.
 - I've only tested it on the Discord desktop app with Vencord. Equicord, Vesktop and Equibop should work too. The browser version probably won't.
 
+## Credits
+
+- [FFmpeg](https://ffmpeg.org) does all the actual converting
+- [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm) for the WebAssembly build. It's downloaded when you first use the plugin, it isn't included in this repo
+- [Vencord](https://github.com/Vendicated/Vencord) and [Equicord](https://github.com/Equicord/Equicord) for the plugin APIs
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). You can use, change and share this however you want, just keep the license file with it. FFmpeg and ffmpeg.wasm have their own licenses.
