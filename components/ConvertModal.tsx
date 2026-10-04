@@ -110,6 +110,8 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
     });
     const [phase, setPhase] = useState<Phase>({ name: "pick" });
     const abortRef = useRef<AbortController | null>(null);
+    // embeds don't know their size until downloaded
+    const [inputSize, setInputSize] = useState(info.size);
 
     // cancel if the modal gets closed
     useEffect(() => () => abortRef.current?.abort(), []);
@@ -124,6 +126,8 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
             setPhase({ name: "loading" });
             const [blob] = await Promise.all([sourceBlob(source), loadFFmpeg()]);
             if (abort.signal.aborted) return;
+            checkInputSize(blob.size);
+            setInputSize(blob.size);
 
             setPhase({ name: "converting", progress: { ratio: 0, seconds: 0 } });
             const file = await ffmpeg.convert(blob, info.filename, preset, {
@@ -134,10 +138,10 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
                 },
             });
 
-            if (preset.mustShrink && info.size > 0 && file.size >= info.size)
+            if (preset.mustShrink && file.size >= blob.size)
                 setPhase({ name: "not-smaller", file });
             else
-                finish(file);
+                finish(file, blob.size);
         } catch (e) {
             // ignore errors that come in after cancelling
             if (e instanceof AbortError || abort.signal.aborted) return;
@@ -152,8 +156,8 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
         }
     }
 
-    function finish(file: File) {
-        const summary = `${info.filename} → ${file.name} (${formatBytes(info.size)} → ${formatBytes(file.size)})`;
+    function finish(file: File, inSize = inputSize) {
+        const summary = `${info.filename} → ${file.name} (${formatBytes(inSize)} → ${formatBytes(file.size)})`;
         switch (source.type) {
             case "upload":
                 replaceUpload(source.upload, file, source.draftType);
@@ -208,7 +212,7 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
             {...modalProps}
             size="sm"
             title="Convert Media"
-            subtitle={`${info.filename} · ${formatBytes(info.size)}`}
+            subtitle={info.size > 0 ? `${info.filename} · ${formatBytes(info.size)}` : info.filename}
             actions={actions}
         >
             <div className={cl("content")}>
@@ -239,7 +243,7 @@ function ConvertModal({ source, modalProps }: { source: ConvertSource; modalProp
                 {phase.name === "not-smaller" && (
                     <div>
                         This video is already well compressed: the result would be {formatBytes(phase.file.size)},
-                        {" "}not smaller than the original ({formatBytes(info.size)}), so nothing was changed.
+                        {" "}not smaller than the original ({formatBytes(inputSize)}), so nothing was changed.
                         <div className={cl("muted")}>For a smaller file, raise the compress strength in the plugin settings.</div>
                     </div>
                 )}

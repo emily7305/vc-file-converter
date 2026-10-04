@@ -7,7 +7,7 @@
     "author": "emily7305",
     "repository": "github:emily7305/vc-file-converter",
     "scripts": {
-        "test": "node --test test/presets.test.mjs",
+        "test": "node --test test/presets.test.mjs test/media.test.mjs",
         "test:e2e": "node test/worker.e2e.mjs",
         "typecheck": "cd ../../.. && pnpm exec tsc --noEmit -p src/userplugins/vc-file-converter/tsconfig.json",
         "lint": "cd ../../.. && pnpm exec eslint --rule \"simple-header/header: off\" --ignore-pattern \"src/userplugins/vc-file-converter/test/**\" src/userplugins/vc-file-converter"

@@ -9,48 +9,31 @@ import { chooseFile } from "@utils/web";
 import { Channel, Message } from "@vencord/discord-types";
 import { Menu, SelectedChannelStore } from "@webpack/common";
 
-import { detectMediaKind } from "../ffmpeg/presets";
+import { collectMedia, MediaItem, pickClicked } from "../utils/media";
 import { openConvertModal } from "./ConvertModal";
 import { ConvertIcon } from "./icons";
 
-interface Attachment {
-    id: string;
-    filename: string;
-    url: string;
-    proxy_url?: string;
-    content_type?: string;
-    size: number;
-}
-
-function convertibleAttachments(message: Message): Attachment[] {
-    return ((message.attachments ?? []) as unknown as Attachment[])
-        .filter(a => detectMediaKind(a.filename, a.content_type));
-}
-
-function openForAttachment(a: Attachment, message: Message) {
+function openForItem(item: MediaItem, message: Message) {
     openConvertModal({
         type: "attachment",
-        url: a.url,
-        filename: a.filename,
-        mime: a.content_type,
-        size: a.size,
+        url: item.url,
+        filename: item.filename,
+        mime: item.mime,
+        size: item.size,
         // usually the same channel anyway
         channelId: SelectedChannelStore.getChannelId() ?? message.channel_id,
     });
 }
 
-
+// attachments, link embeds and forwarded messages
 export const messageContextMenuPatch: NavContextMenuPatchCallback = (children, props: { message?: Message; itemHref?: string; itemSrc?: string; }) => {
     const { message } = props;
     if (!message) return;
 
-    const attachments = convertibleAttachments(message);
-    if (!attachments.length) return;
+    const items = collectMedia(message);
+    if (!items.length) return;
 
-    // only use the attachment that was right clicked, if there was one
-    const clicked = [props.itemHref, props.itemSrc].filter(Boolean) as string[];
-    const target = attachments.find(a => clicked.some(url => url.includes(`/${a.id}/`)));
-    const list = target ? [target] : attachments;
+    const list = pickClicked(items, [props.itemHref, props.itemSrc]);
 
     children.push(
         <Menu.MenuSeparator />,
@@ -60,24 +43,23 @@ export const messageContextMenuPatch: NavContextMenuPatchCallback = (children, p
                     id="vc-fconv-convert"
                     label="Convert Media"
                     leadingAccessory={{ type: "icon", icon: ConvertIcon }}
-                    action={() => openForAttachment(list[0], message)}
+                    action={() => openForItem(list[0], message)}
                 />
             )
             : (
                 <Menu.MenuItem id="vc-fconv-convert" label="Convert Media" leadingAccessory={{ type: "icon", icon: ConvertIcon }}>
-                    {list.map(a => (
+                    {list.map(item => (
                         <Menu.MenuItem
-                            key={a.id}
-                            id={`vc-fconv-convert-${a.id}`}
-                            label={a.filename}
-                            action={() => openForAttachment(a, message)}
+                            key={item.key}
+                            id={`vc-fconv-convert-${item.key}`}
+                            label={item.filename}
+                            action={() => openForItem(item, message)}
                         />
                     ))}
                 </Menu.MenuItem>
             )
     );
 };
-
 
 export const channelAttachMenuPatch: NavContextMenuPatchCallback = (children, props: { channel?: Channel; }) => {
     const { channel } = props;
